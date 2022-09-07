@@ -1,0 +1,6 @@
+[submodule "code/c_inv_imu"]
+	path = code/c_inv_imu
+	url = https://github.com/beforelight/c_inv_imu.git
+[submodule "code/letter-shell"]
+	path = code/letter-shell
+	url = https://github.com/NevermindZZT/letter-shell.git
