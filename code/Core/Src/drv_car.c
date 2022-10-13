@@ -13,7 +13,7 @@
 #define CURRENT_MOTO_SPEED(X) ((ROBOT_WHEEL_DIAMETER * Pi_v * (X / ENCODER_TTL_COUNT_VALUE)) / CONTROL_TIMER_CYCLE) //轮子的运动速度m/s
 
 car_t car;
-float Ts = 0.005;
+float Ts = 0.005f;
 float Ts_inver = 200;
 
 //这里的pid参数由Matlab计算出来
@@ -72,7 +72,7 @@ void pid_update(pid_t *s)
 void car_init(int car_ctrl_period_ms)
 {
   memset(&car, 0, sizeof(car_t)); //清0
-  Ts = 0.001 * car_ctrl_period_ms;
+  Ts = 0.001f * car_ctrl_period_ms;
   Ts_inver = 1 / Ts;
   for (int i = 0; i < 4; i++) {
     pid_init(&car.spd_pid[i], Ts, 1, -1);
@@ -89,18 +89,18 @@ void car_speed_get()
   update_speed(&car.speed[4 - 1], &htim3);
   update_speed(&car.speed[1 - 1], &htim4);
   update_speed(&car.speed[2 - 1], &htim5);
-#define __FBINVERT(idx) car.speed[idx] = -car.speed[idx]
+#define FBINVERT(idx) (car.speed[idx] = -car.speed[idx])
 #if MOTOR_LF_SPD_FB_INVERT
-  __FBINVERT(MOTOR_LF_IDX);
+  FBINVERT(MOTOR_LF_IDX);
 #endif
 #if MOTOR_RF_SPD_FB_INVERT
-  __FBINVERT(MOTOR_RF_IDX);
+  FBINVERT(MOTOR_RF_IDX);
 #endif
 #if MOTOR_LB_SPD_FB_INVERT
-  __FBINVERT(MOTOR_LB_IDX);
+  FBINVERT(MOTOR_LB_IDX);
 #endif
 #if MOTOR_RB_SPD_FB_INVERT
-  __FBINVERT(MOTOR_RB_IDX);
+  FBINVERT(MOTOR_RB_IDX);
 #endif
 }
 
@@ -108,26 +108,29 @@ void car_speed_ctrl()
 {
   //计算控制量
   if (!car.spd_ctrl_identify_mode) {
-    //速度目标方向校正，并且缓和速度目标的变化
-#define __GET_PID_REF(idx, invert) car.spd_pid[idx].ref = 0.9f * car.spd_pid[idx].ref + 0.1f * (invert ? (-car.speed_dst[idx]) : (car.speed_dst[idx]))
-    __GET_PID_REF(MOTOR_LF_IDX, MOTOR_LF_SPD_REF_INVERT);
-    __GET_PID_REF(MOTOR_RF_IDX, MOTOR_RF_SPD_REF_INVERT);
-    __GET_PID_REF(MOTOR_LB_IDX, MOTOR_LB_SPD_REF_INVERT);
-    __GET_PID_REF(MOTOR_RB_IDX, MOTOR_RB_SPD_REF_INVERT);
+    // 速度目标方向校正，并且缓和速度目标的变化
+//#define GET_PID_REF(idx, invert) (car.spd_pid[idx].ref = 0.9f * car.spd_pid[idx].ref + 0.1f * (invert ? (-car.speed_dst[idx]) : (car.speed_dst[idx])))
+//    GET_PID_REF(MOTOR_LF_IDX, MOTOR_LF_SPD_REF_INVERT);
+//    GET_PID_REF(MOTOR_RF_IDX, MOTOR_RF_SPD_REF_INVERT);
+//    GET_PID_REF(MOTOR_LB_IDX, MOTOR_LB_SPD_REF_INVERT);
+//    GET_PID_REF(MOTOR_RB_IDX, MOTOR_RB_SPD_REF_INVERT);
+    for (int i = 0; i < 4; ++i) {
+      car.spd_pid[i].ref = car.speed_dst[i];
+    }
     for (int i = 0; i < 4; i++) {
       car.spd_pid[i].fb = car.speed[i];
       pid_update(&car.spd_pid[i]);
       car.u_out[i] = car.spd_pid[i].u;
     }
   } else {
-    //使用随机信号作为辨识输入
+    // 使用随机信号作为辨识输入
     uint32_t urnd = HAL_RNG_GetRandomNumber(&hrng);
     int16_t *rnd = (int16_t *) &urnd;
-    float frnd = (1.0 / 32768.0) * ((float) (*rnd));
-    if (frnd > 0.9) frnd = 0.9;
-    if (frnd < -0.9) frnd = -0.9;
+    float frnd = (1.0f / 32768.0f) * ((float) (*rnd));
+    if (frnd > 0.9) frnd = 0.9f;
+    if (frnd < -0.9) frnd = -0.9f;
     static float frnd_filter = 0;
-    frnd_filter = 0.3 * frnd + 0.7 * frnd_filter;
+    frnd_filter = 0.3f * frnd + 0.7f * frnd_filter;
     car.u_out[0] = frnd_filter;
     car.u_out[1] = frnd_filter;
     car.u_out[2] = frnd_filter;
@@ -137,9 +140,9 @@ void car_speed_ctrl()
   //根据控制量输出
   car.u_out[0] < 0 ? (HAL_GPIO_WritePin(M1_IN1_GPIO_Port, M1_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M1_IN2_GPIO_Port, M1_IN2_Pin, GPIO_PIN_RESET))
                    : (HAL_GPIO_WritePin(M1_IN2_GPIO_Port, M1_IN2_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M1_IN1_GPIO_Port, M1_IN1_Pin, GPIO_PIN_RESET));
-  car.u_out[1] < 0 ? (HAL_GPIO_WritePin(M2_IN1_GPIO_Port, M2_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M2_IN2_GPIO_Port, M2_IN2_Pin, GPIO_PIN_RESET))
+  car.u_out[1] > 0 ? (HAL_GPIO_WritePin(M2_IN1_GPIO_Port, M2_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M2_IN2_GPIO_Port, M2_IN2_Pin, GPIO_PIN_RESET))
                    : (HAL_GPIO_WritePin(M2_IN2_GPIO_Port, M2_IN2_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M2_IN1_GPIO_Port, M2_IN1_Pin, GPIO_PIN_RESET));
-  car.u_out[2] < 0 ? (HAL_GPIO_WritePin(M3_IN1_GPIO_Port, M3_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M3_IN2_GPIO_Port, M3_IN2_Pin, GPIO_PIN_RESET))
+  car.u_out[2] > 0 ? (HAL_GPIO_WritePin(M3_IN1_GPIO_Port, M3_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M3_IN2_GPIO_Port, M3_IN2_Pin, GPIO_PIN_RESET))
                    : (HAL_GPIO_WritePin(M3_IN2_GPIO_Port, M3_IN2_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M3_IN1_GPIO_Port, M3_IN1_Pin, GPIO_PIN_RESET));
   car.u_out[3] < 0 ? (HAL_GPIO_WritePin(M4_IN1_GPIO_Port, M4_IN1_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M4_IN2_GPIO_Port, M4_IN2_Pin, GPIO_PIN_RESET))
                    : (HAL_GPIO_WritePin(M4_IN2_GPIO_Port, M4_IN2_Pin, GPIO_PIN_SET), HAL_GPIO_WritePin(M4_IN1_GPIO_Port, M4_IN1_Pin, GPIO_PIN_RESET));
@@ -173,20 +176,20 @@ void car_upload_to_ros_node()
 
   car.Send_Data.Sensor_Str.MotoStr[3].Moto_CurrentSpeed = car.speed[3];
   car.Send_Data.Sensor_Str.MotoStr[3].Moto_TargetSpeed = car.speed_dst[3];
-  //返回的速度也需要反向
-#define __CURINVERT(idx) car.Send_Data.Sensor_Str.MotoStr[idx].Moto_CurrentSpeed = -car.Send_Data.Sensor_Str.MotoStr[idx].Moto_CurrentSpeed
-#if MOTOR_LF_SPD_REF_INVERT
-  __CURINVERT(MOTOR_LF_IDX);
-#endif
-#if MOTOR_RF_SPD_REF_INVERT
-  __CURINVERT(MOTOR_RF_IDX);
-#endif
-#if MOTOR_LB_SPD_REF_INVERT
-  __CURINVERT(MOTOR_LB_IDX);
-#endif
-#if MOTOR_RB_SPD_REF_INVERT
-  __CURINVERT(MOTOR_RB_IDX);
-#endif
+  // 返回的速度也需要反向
+  // #define CURINVERT(idx) (car.Send_Data.Sensor_Str.MotoStr[idx].Moto_CurrentSpeed = -car.Send_Data.Sensor_Str.MotoStr[idx].Moto_CurrentSpeed)
+  // #if MOTOR_LF_SPD_REF_INVERT
+  //   CURINVERT(MOTOR_LF_IDX);
+  // #endif
+  // #if MOTOR_RF_SPD_REF_INVERT
+  //   CURINVERT(MOTOR_RF_IDX);
+  // #endif
+  // #if MOTOR_LB_SPD_REF_INVERT
+  //   CURINVERT(MOTOR_LB_IDX);
+  // #endif
+  // #if MOTOR_RB_SPD_REF_INVERT
+  //   CURINVERT(MOTOR_RB_IDX);
+  // #endif
 
   if (imu0 != 0 && IMU_IsOpen(imu0)) {
     int16_t buf[9];

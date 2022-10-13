@@ -13,15 +13,15 @@
 
 //是否将电机速度反馈取反，以适应当编码器线和电机线交换其中一个的情况
 #define MOTOR_LF_SPD_FB_INVERT (true)
-#define MOTOR_RF_SPD_FB_INVERT (true)
+#define MOTOR_RF_SPD_FB_INVERT (false)
 #define MOTOR_LB_SPD_FB_INVERT (true)
-#define MOTOR_RB_SPD_FB_INVERT (true)
+#define MOTOR_RB_SPD_FB_INVERT (false)
 
 //是否将驱动器速度目标取反，以适应编码器线和电机线同时交换的情况
-#define MOTOR_LF_SPD_REF_INVERT (false)
-#define MOTOR_RF_SPD_REF_INVERT (true)
-#define MOTOR_LB_SPD_REF_INVERT (false)
-#define MOTOR_RB_SPD_REF_INVERT (true)
+#define MOTOR_LF_SPD_REF_INVERT (true)
+#define MOTOR_RF_SPD_REF_INVERT (false)
+#define MOTOR_LB_SPD_REF_INVERT (true)
+#define MOTOR_RB_SPD_REF_INVERT (false)
 
 typedef struct __pid {
   float ref; //目标

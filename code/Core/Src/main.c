@@ -239,10 +239,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         car.upload_frame.fdata[1] = car.speed[1];
         car.upload_frame.fdata[2] = car.speed[2];
         car.upload_frame.fdata[3] = car.speed[3];
-        car.upload_frame.fdata[0 + 4] = car.u_out[0];
-        car.upload_frame.fdata[1 + 4] = car.u_out[1];
-        car.upload_frame.fdata[2 + 4] = car.u_out[2];
-        car.upload_frame.fdata[3 + 4] = car.u_out[3];
+        car.upload_frame.fdata[0 + 4] = car.speed_dst[0];
+        car.upload_frame.fdata[1 + 4] = car.speed_dst[1];
+        car.upload_frame.fdata[2 + 4] = car.speed_dst[2];
+        car.upload_frame.fdata[3 + 4] = car.speed_dst[3];
         HAL_UART_Transmit(&huart3, (uint8_t *) &car.upload_frame, sizeof(Frame_t), ~0);
       }
     }
