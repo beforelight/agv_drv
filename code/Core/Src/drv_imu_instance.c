@@ -39,7 +39,7 @@ void imu_init()
     cfg.gyroFullScale = MPU_FS_2000dps;
     cfg.gyroBandwidth = MPU_GBW_10;
     cfg.gyroUnit = MPU_UNIT_DegPerSec;
-    cfg.accelFullScale = MPU_FS_8G;
+    cfg.accelFullScale = MPU_FS_2G;
     cfg.accelBandwidth = MPU_ABW_10;
     cfg.accelUnit = MPU_UNIT_MetersPerSquareSecond;
 
