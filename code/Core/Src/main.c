@@ -258,6 +258,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (tick % 2000 == 0) {
       // 2s period
       led_on(100);
+
+      // vbus warning
+      if (car.vbus_warning)
+        beep_on(700);
     }
   }
 }
@@ -266,8 +270,8 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   static uint32_t u_verf;
   static uint32_t u_vbus;
-  static float vref;
-  static float vbus;
+  static float vref = 1.21f;
+  static float vbus = 12.6f;
 #define ADC_LEFT_SHIFT (6)
   if (hadc == &hadc1) {
     u_verf = (u_verf * ((1 << ADC_LEFT_SHIFT) - 1)
@@ -285,8 +289,18 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef *hadc)
     if (tick % (1 << ADC_LEFT_SHIFT) == 0) {
       vref = (float) u_verf * 3.3f / (float) (4096 << ADC_LEFT_SHIFT);
       vbus = (float) u_vbus * 1.21f * 11.0f / (float) u_verf; // 11.0f = divider ratio
-      digi_set_num_no_refresh(vbus * 10 + 0.5f);              // 0.5f for rounding
+      digi_set_num_no_refresh(vbus * 10.0f + 0.5f);           // 0.5f for rounding
       car.vbus = vbus;
+
+      // vbus warning
+      if (car.vbus > 5.4f) {
+        if ((!car.vbus_warning) && car.vbus < 10.0)
+          car.vbus_warning = true;
+        if (car.vbus_warning && car.vbus > 10.2)
+          car.vbus_warning = false;
+      } else {
+        car.vbus_warning = false;
+      }
     }
   }
 }

@@ -31,6 +31,7 @@ inv_imu_handle_t imu0;
 float imu_temp;
 void imu_init()
 {
+  HAL_Delay(10);//
   imu0 = IMU_AutoConstructI2C(i2c0, IMU_SlaveAddressAutoDetect);
   if (imu0 != NULL) {
     SYSLOG_I("当前使用的传感器为 %s", IMU_Report(imu0));
