@@ -15,4 +15,7 @@
 
 物料里面TB6612可能停产了，MCU、IMU也可以试试其他ic
 
+### License
+见 License文件
+
 
